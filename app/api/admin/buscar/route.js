@@ -27,7 +27,7 @@ export async function POST(request) {
     .from('usuarias')
     .select('*')
     .eq('id', usuarioAuth.id)
-    .single();
+    .maybeSingle();
 
   if (perfilError) {
     return NextResponse.json({ error: perfilError.message }, { status: 500 });

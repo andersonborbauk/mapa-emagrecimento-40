@@ -16,7 +16,7 @@ export default function KitPage() {
       const supabase = createClientBrowser();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) { router.push('/'); return; }
-      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).single();
+      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).maybeSingle();
       setUsuaria(data);
     }
     carregar();

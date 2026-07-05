@@ -19,7 +19,7 @@ export default function PlanoPage() {
       const supabase = createClientBrowser();
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) { router.push('/'); return; }
-      const { data: usuaria } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).single();
+      const { data: usuaria } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).maybeSingle();
 
       const tmb = calcularTMB({ pesoKg: usuaria.peso_atual, alturaCm: usuaria.altura_cm, idade: usuaria.idade });
       const planoSemanal = montarPlanoSemanal({

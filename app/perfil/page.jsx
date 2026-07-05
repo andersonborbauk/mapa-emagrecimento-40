@@ -16,7 +16,7 @@ export default function PerfilPage() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData?.user) { router.push('/'); return; }
       setEmail(userData.user.email);
-      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).single();
+      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).maybeSingle();
       setUsuaria(data);
     }
     carregar();

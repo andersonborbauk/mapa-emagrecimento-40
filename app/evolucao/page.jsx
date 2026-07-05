@@ -19,7 +19,7 @@ export default function EvolucaoPage() {
       if (!userData?.user) { router.push('/'); return; }
       const userId = userData.user.id;
 
-      const { data: perfil } = await supabase.from('usuarias').select('*').eq('id', userId).single();
+      const { data: perfil } = await supabase.from('usuarias').select('*').eq('id', userId).maybeSingle();
       setUsuaria(perfil);
 
       const { data: checkins } = await supabase

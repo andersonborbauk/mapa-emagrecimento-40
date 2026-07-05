@@ -28,7 +28,7 @@ export default function DashboardPage() {
         router.push('/');
         return;
       }
-      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).single();
+      const { data } = await supabase.from('usuarias').select('*').eq('id', userData.user.id).maybeSingle();
       setUsuaria(data);
       setCarregando(false);
     }

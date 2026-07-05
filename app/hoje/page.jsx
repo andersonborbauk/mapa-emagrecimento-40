@@ -35,7 +35,7 @@ export default function HojePage() {
         return;
       }
       const userId = userData.user.id;
-      const { data: perfil } = await supabase.from('usuarias').select('*').eq('id', userId).single();
+      const { data: perfil } = await supabase.from('usuarias').select('*').eq('id', userId).maybeSingle();
       setUsuaria(perfil);
 
       const { data: missoes } = await supabase
