@@ -13,7 +13,13 @@ const supabase = createClient(
 // Função auxiliar para verificar se a compra foi aprovada
 function isApprovedPurchase(evento) {
 
-  return evento === 'purchase.approved' || evento === 'order.paid';
+  return evento === 'purchase.approved' || 
+
+                 evento === 'purchase_approved' || 
+
+                 evento === 'order.paid' ||
+
+                 evento === 'order_paid';
 
 }
 
@@ -23,7 +29,6 @@ export async function POST(request) {
 
           const body = await request.json();
 
-            console.log('CAKTO PAYLOAD COMPLETO:', JSON.stringify(body, null, 2));
 
           const evento = body?.event;
 
@@ -72,7 +77,13 @@ export async function POST(request) {
           // Evento de revogação: reembolso, chargeback, etc
           if (isApprovedPurchase(evento) === false && 
 
-                      (evento === 'reembolso' || evento === 'chargeback' || evento === 'payment.failed' || evento === 'refund.completed')) {
+                      (evento === 'reembolso' || evento === 'reembolso_event' || 
+                       
+                                  evento === 'chargeback' || evento === 'chargeback_event' || 
+                       
+                                  evento === 'payment.failed' || evento === 'payment_failed' || 
+                       
+                                  evento === 'refund.completed' || evento === 'refund_completed')) {{
 
               try {
 
