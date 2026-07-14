@@ -23,11 +23,36 @@ function isApprovedPurchase(evento) {
 
 }
 
+// Função para verificar se o webhook tem autorização válida (verifica secret)
+function isCaktoWebhookAuthorized(body, request) {
+          const secretEnv = process.env.CAKTO_WEBHOOK_SECRET;
+
+          // Candidatos de autenticação em ordem de prioridade:
+          // 1. Body.secret (enviado pela Cakto no corpo da requisição)
+          // 2. Header x-webhook-secret
+          // 3. Header x-cakto-secret
+          // 4. Query param secret
+
+          const bodySecret = body?.secret;
+          const headerSecret = request.headers.get('x-webhook-secret') || request.headers.get('x-cakto-secret');
+          const querySecret = request.nextUrl.searchParams.get('secret');
+
+          const providedSecret = bodySecret || headerSecret || querySecret;
+
+          return providedSecret === secretEnv;
+}
+
+
 export async function POST(request) {
 
   try {
 
           const body = await request.json();
+
+              // Verifica se o webhook tem autorização válida
+              if (!isCaktoWebhookAuthorized(body, request)) {
+                            return NextResponse.json({ error: 'Unauthorized - Invalid secret' }, { status: 401 });
+              }
 
 
           const evento = body?.event;
