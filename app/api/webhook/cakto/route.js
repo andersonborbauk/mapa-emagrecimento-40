@@ -23,6 +23,8 @@ export async function POST(request) {
 
           const body = await request.json();
 
+            console.log('CAKTO PAYLOAD COMPLETO:', JSON.stringify(body, null, 2));
+
           const evento = body?.event;
 
           const email = body?.customer?.email || body?.data?.customer?.email;
