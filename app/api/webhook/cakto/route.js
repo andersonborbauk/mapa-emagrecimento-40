@@ -4,102 +4,111 @@ import { NextResponse } from 'next/server';
 
 const supabase = createClient(
 
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
 
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+        process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    );
+      );
+
+// Função auxiliar para verificar se a compra foi aprovada
+function isApprovedPurchase(evento) {
+
+  return evento === 'purchase.approved' || evento === 'order.paid';
+
+}
 
 export async function POST(request) {
 
   try {
 
-        const body = await request.json();
+          const body = await request.json();
 
-        const evento = body?.event;
+          const evento = body?.event;
 
-        const email = body?.customer?.email || body?.data?.customer?.email;
+          const email = body?.customer?.email || body?.data?.customer?.email;
 
-        if (!email) {
+          if (!email) {
 
-            return NextResponse.json({ error: 'Email nao encontrado' }, { status: 400 });
+              return NextResponse.json({ error: 'Email nao encontrado' }, { status: 400 });
 
-        }
+          }
 
-        // Evento de compra aprovada ou pedido pago
-        if (evento === 'purchase.approved' || evento === 'order.paid') {
+          // Evento de compra aprovada: conceder acesso
+          if (isApprovedPurchase(evento)) {
 
-            try {
+              try {
 
-                    const { error } = await supabase
+                        const { error } = await supabase
 
-                      .from('pending_permissions')
+                          .from('pending_permissions')
 
-                      .upsert(
-                          { email, main_plan: true },
-                          { onConflict: 'email' }
-                                    );
+                          .upsert(
+                                { email, main_plan: true },
+                                { onConflict: 'email' }
+                                          );
 
-                    if (error) {
+                        if (error) {
 
-                          console.error('Supabase upsert error:', error);
+                              console.error('Supabase upsert error:', error);
 
-                          return NextResponse.json({ error: error.message }, { status: 500 });
+                              return NextResponse.json({ error: error.message }, { status: 500 });
 
-                    }
+                        }
 
-                    return NextResponse.json({ success: true, email, evento, action: 'upsert_pending_permissions' }, { status: 200 });
+                        return NextResponse.json({ success: true, email, evento, action: 'access_granted' }, { status: 200 });
 
-            } catch (dbError) {
+              } catch (dbError) {
 
-                    console.error('Database error:', dbError);
+                        console.error('Database error:', dbError);
 
-                    return NextResponse.json({ error: 'Erro ao atualizar pending_permissions' }, { status: 500 });
+                        return NextResponse.json({ error: 'Erro ao conceder acesso' }, { status: 500 });
 
-            }
+              }
 
-        }
+          }
 
-        // Evento de reembolso ou chargeback
-        if (evento === 'reembolso' || evento === 'chargeback') {
+          // Evento de revogação: reembolso, chargeback, etc
+          if (isApprovedPurchase(evento) === false && 
 
-            try {
+                      (evento === 'reembolso' || evento === 'chargeback' || evento === 'payment.failed' || evento === 'refund.completed')) {
 
-                    const { error } = await supabase
+              try {
 
-                      .from('pending_permissions')
+                        const { error } = await supabase
 
-                      .update({ main_plan: false })
+                          .from('pending_permissions')
 
-                      .eq('email', email);
+                          .update({ main_plan: false })
 
-                    if (error) {
+                          .eq('email', email);
 
-                          console.error('Supabase update error:', error);
+                        if (error) {
 
-                          return NextResponse.json({ error: error.message }, { status: 500 });
+                              console.error('Supabase update error:', error);
 
-                    }
+                              return NextResponse.json({ error: error.message }, { status: 500 });
 
-                    return NextResponse.json({ success: true, email, evento, action: 'update_main_plan_false' }, { status: 200 });
+                        }
 
-            } catch (dbError) {
+                        return NextResponse.json({ success: true, email, evento, action: 'access_revoked' }, { status: 200 });
 
-                    console.error('Database error:', dbError);
+              } catch (dbError) {
 
-                    return NextResponse.json({ error: 'Erro ao atualizar pending_permissions' }, { status: 500 });
+                        console.error('Database error:', dbError);
 
-            }
+                        return NextResponse.json({ error: 'Erro ao revogar acesso' }, { status: 500 });
 
-        }
+              }
 
-        return NextResponse.json({ received: true, evento }, { status: 200 });
+          }
+
+          return NextResponse.json({ received: true, evento }, { status: 200 });
 
   } catch (err) {
 
-        console.error('Webhook error:', err);
+          console.error('Webhook error:', err);
 
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+          return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 
   }
 
